@@ -1,0 +1,26 @@
+﻿CREATE or replace VIEW vwsubgraquiz
+as
+select
+    distinct n.name as vsubnanme,to_char(j.startdate,'yyyy-mm-dd') as vsubstart,to_char(j.enddate,'yyyy-mm-dd') as vsubend,
+    t.name as vtextname, l.name as vlecturername, j.practicalpercent as vsubpracpercent, j.writtenpercent as vsubwrittenpercent,
+    g.written as vgrawritten, g.practical as vgrapractical, q.quizdate as vquizdate,i.seq as vstuinseq,j.seq as vsubseq
+    
+FROM 
+    tblstudent s
+        INNER JOIN tblstudentinfo i
+            ON s.studentinfoseq = i.seq
+                INNER JOIN tblsubjectgrade g
+                    ON g.studentseq = s.seq
+                        INNER JOIN tblsubject j
+                            ON j.seq = g.subjectseq
+                                INNER join tblquiz q
+                                    ON q.subjectseq = j.seq
+                                        Inner join tblcourse c
+                                            on c.seq = s.courseseq
+                                                inner join tbllecturer l
+                                                    on l.seq = c.lecturerseq
+                                                        inner join tbltextbook t
+                                                          on  t.seq = j.textbookseq
+                                                            Inner join tblsubjectname n 
+                                                                on n.seq = j.subjectnameseq
+                                                                	where i.state=1;

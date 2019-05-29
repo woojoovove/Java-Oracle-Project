@@ -1,0 +1,60 @@
+package dto;
+
+public class VwQuizListDTO {
+
+	private String vsubjectSeq;
+	private String vSubjectName;
+	private String vQuizNum;
+	private String vQuizDate;
+	private String vQuizContents;
+	private String vQuizAnswer;
+	
+	
+	
+	
+	
+	
+	
+
+	public String getVsubjectSeq() {
+		return vsubjectSeq;
+	}
+	public void setVsubjectSeq(String vsubjectSeq) {
+		this.vsubjectSeq = vsubjectSeq;
+	}
+	public String getvQuizDate() {
+		return vQuizDate;
+	}
+	public void setvQuizDate(String vQuizDate) {
+		this.vQuizDate = vQuizDate;
+	}
+	public String getvSubjectName() {
+		return vSubjectName;
+	}
+	public void setvSubjectName(String vSubjectName) {
+		this.vSubjectName = vSubjectName;
+	}
+	public String getvQuizNum() {
+		return vQuizNum;
+	}
+	public void setvQuizNum(String vQuizNum) {
+		this.vQuizNum = vQuizNum;
+	}
+	public String getvQuizContents() {
+		return vQuizContents;
+	}
+	public void setvQuizContents(String vQuizContents) {
+		this.vQuizContents = vQuizContents;
+	}
+	public String getvQuizAnswer() {
+		return vQuizAnswer;
+	}
+	public void setvQuizAnswer(String vQuizAnswer) {
+		this.vQuizAnswer = vQuizAnswer;
+	}
+
+	
+	
+	
+	
+}

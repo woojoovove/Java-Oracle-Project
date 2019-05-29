@@ -1,0 +1,99 @@
+﻿CREATE OR REPLACE VIEW vwcousubstubook
+as
+SELECT n.name as vcouname,to_char(c.startdate,'yy-mm-dd') as vcoustart,to_char(c.enddate,'yy-mm-dd') as vcouend,
+r.name as vroomname,j.name as vsubname,to_char(s.startdate,'yy-mm-dd') as vsubstart,to_char(s.enddate,'yy-mm-dd') as vsubend,t.name as vbookname
+,s.attendancepercent as vsubatt,s.writtenpercent as vsubwrit,s.practicalpercent as vsubprac,c.seq as vcouseq,s.seq as vsubseq, l.seq as vlecturerseq
+    FROM tblcourse c
+        INNER JOIN tblcoursename n
+            ON c.coursenameseq = n.seq
+            INNER JOIN tblclassroom r
+                ON c.classroomseq=r.seq
+                    INNER JOIN tbllecturer l
+                        ON c.lecturerseq = l.seq
+                            INNER JOIN tblsubject s
+                                ON c.seq = s.courseseq
+                                    INNER JOIN tbltextbook t
+                                        ON t.seq = s.textbookseq
+                                           INNER JOIN tblsubjectname j
+                                                ON j.seq = s.subjectnameseq
+                                                    WHERE c.enddate=(select max(enddate) from tblcourse where enddate<sysdate)
+                                                        order by s.seq;
+
+
+CREATe or replace VIEW vwsinfo
+as
+SELECT i.name as vstuname,i.phonenum as vstupnum,
+case
+    when s.status = 1 then '수료'
+    when s.status = 2 then '중도탈락'
+    when s.status = 3 then '수강중'
+    when s.status = 4 then '수강예정'   
+    else '잘못된 입력'
+    end
+    as vstustatus,s.seq as vstuseq
+    ,g.subjectseq as vgsubseq,  
+    case
+    when  to_char(s.statusDate,'yy-mm-dd') is not null then  to_char(s.statusDate,'yy-mm-dd')
+    when  to_char(s.statusDate,'yy-mm-dd') is null then '해당사항 없음'
+    end
+    as vstatusdate
+    FROM tblsubjectgrade g
+        INNER JOIN tblstudent s
+            ON g.studentseq=s.seq
+                INNER JOIN tblstudentinfo i
+                    ON i.seq = s.studentinfoseq
+                        WHERE g.attendance is null or g.practical is null;
+
+
+
+CREATE or replace VIEW vwstugra
+as
+SELECT i.name as vstuname,i.phonenum as vstupnum,
+case
+    when s.status = 1 then '수료'
+    when s.status = 2 then '중도탈락'
+    when s.status = 3 then '수강중'
+    when s.status = 4 then '수강예정'   
+    else '잘못된 입력'
+end as vstustatus,s.seq as vstuseq,g.subjectseq as vsubseq
+          ,to_char(s.statusdate,'yyyy-mm-dd') as vstustadate,g.seq as vgraseq
+    FROM tblsubjectgrade g
+        INNER JOIN tblstudent s
+            ON g.studentseq=s.seq
+                INNER JOIN tblstudentinfo i
+                    ON i.seq = s.studentinfoseq;
+
+
+CREATE or replace VIEW vwcousubstuinfo 
+as
+SELECT n.name as vcouname,c.startdate as vcoustart,c.enddate as vcouend,
+r.name as vroomname,j.name as vsubname,s.startdate as vsubstart,s.enddate as vsubend,t.name as vbookname
+,s.attendancepercent as vsubatt,s.writtenpercent as vsubwri,s.practicalpercent as vsubprac, s.seq as vsubseq,
+c.seq as vcouseq
+    FROM tblcourse c
+        INNER JOIN tblcoursename n
+            ON c.coursenameseq = n.seq
+            INNER JOIN tblclassroom r
+                ON c.classroomseq=r.seq
+                    INNER JOIN tbllecturer l
+                        ON c.lecturerseq = l.seq
+                            INNER JOIN tblsubject s
+                                ON c.seq = s.courseseq
+                                    INNER JOIN tbltextbook t
+                                        ON t.seq = s.textbookseq
+                                           INNER JOIN tblsubjectname j
+                                                ON j.seq = s.subjectnameseq
+                                                     order by c.seq; 
+
+
+CREATE or replace VIEW vwstugrainfo
+as
+SELECT i.name as vstuname,s.seq as vstuseq,g.written as vgrawri,g.practical as vgraprac,g.seq as vgraseq
+    ,g.subjectseq as vgrasubseq
+    FROM tblsubjectgrade g
+        INNER JOIN tblstudent s
+            ON g.studentseq=s.seq
+                INNER JOIN tblstudentinfo i
+                    ON i.seq = s.studentinfoseq;
+                        where subjectseq = 2;
+

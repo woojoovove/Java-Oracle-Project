@@ -1,0 +1,227 @@
+﻿
+Adminstudent
+
+create view vwbeforecou
+as
+select c.seq as vcouseq, n.name as vcouname from tblcourse c 
+inner join tblcoursename n
+    ON c.coursenameseq = n.seq
+    where c.startdate > sysdate;
+
+
+create view vwtblstudentinfo
+as
+SELECT seq,name,phonenum,to_char(registrationdate,'yyyy-mm-dd') as registrationdate,
+registrationnum,state FROM tblstudentinfo where state=1;
+
+
+CREATE OR REPLACE view vwcoustu
+as
+SELECT DISTINCT n.name as vname,c.seq as vseq FROM tblstudentinfo i 
+    INNER JOIN tblstudent s
+        ON i.seq=s.studentinfoseq
+            INNER JOIN tblcourse c
+               ON s.courseseq = c.seq
+                    INNER JOIN tblcoursename n
+                        ON c.coursenameseq = n.seq
+				where i.state=1;
+
+
+CREATE OR REPLACE VIEW vwstusinfo
+as
+SELECT i.name AS vstuname,i.registrationnum as vsturnum,
+    i.phonenum as vstupnum,s.courseseq as vcouseq,i.seq as vsinfoseq FROM tblstudentinfo i 
+    INNER JOIN tblstudent s
+        ON i.seq=s.studentinfoseq
+            INNER JOIN tblcourse c
+               ON s.courseseq = c.seq
+                    INNER JOIN tblcoursename n
+                        ON c.coursenameseq = n.seq
+					where i.state=1;
+
+
+CREATE OR REPLACE VIEW vwstucou
+as
+SELECT i.name as vstuname,i.registrationnum as vsturnum,i.phonenum as vstupnum, 
+        n.name as vcouname,to_char(c.startdate,'yyyy-mm-dd') as vcoustart,to_char(c.enddate,'yyyy-mm-dd') as vcouend,
+        case 
+            when s.status = 1 then '수료'
+            when s.status = 2 then '중도탈락'
+            else '수강중'
+        end
+        as vstustatus,i.seq as vstuinseq , c.seq as vcouseq
+         ,to_char(i.registrationdate,'yyyy-mm-dd') as vstuinrdate, 
+         case
+            when to_char(s.statusdate,'yyyy-mm-dd') is null then '해당없음'
+            else to_char(s.statusdate,'yyyy-mm-dd')
+         end
+          as vstustatusdate     
+    FROM tblstudentinfo i 
+        INNER JOIN tblstudent s
+            ON i.seq=s.studentinfoseq
+                INNER JOIN tblcourse c
+                   ON s.courseseq = c.seq
+                        INNER JOIN tblcoursename n
+                            ON c.coursenameseq = n.seq where i.state=1;
+
+
+CREATE OR REPLACE VIEW vwcoudate
+as
+SELECT n.name as vcouname,c.seq as vcouseq,c.startdate as vcoustart, c.enddate as vcouend  FROM tblcourse c
+    INNER JOIN tblcoursename n
+         ON c.coursenameseq = n.seq
+            WHERE c.startdate>sysdate;
+
+------------------------------------------------------------------------------------------------
+
+Admingrade
+
+
+CREATE OR REPLACE VIEW vwcouingdate
+AS
+SELECT n.name as vcouname,c.seq as vcouseq FROM tblcourse c
+    INNER JOIN tblcoursename n
+        ON c.coursenameseq=n.seq
+            WHERE sysdate between c.startdate and c.enddate ;
+
+
+
+CREATE OR REPLACE VIEW vwcouroomlec
+AS
+SELECT n.name as vcouname,to_char(c.startdate,'yyyy-mm-dd') as vcoustart,to_char(c.enddate,'yyyy-mm-dd') as vcouend,r.name as vroomname,l.name as vlecname, c.seq as vcouseq 
+   FROM tblcourse c
+    INNER JOIN tblcoursename n
+        ON c.coursenameseq = n.seq
+        INNER JOIN tblclassroom r
+            ON c.classroomseq=r.seq
+                INNER JOIN tbllecturer l
+                    ON c.lecturerseq = l.seq;
+
+CREATE OR REPLACE VIEW vwcousub
+as
+SELECT s.seq as vsubseq,j.name as vsubname,c.seq as vcouseq
+    FROM tblcourse c
+        INNER JOIN tblcoursename n
+            ON c.coursenameseq = n.seq
+            INNER JOIN tblclassroom r
+                ON c.classroomseq=r.seq
+                    INNER JOIN tbllecturer l
+                        ON c.lecturerseq  = l.seq
+                            INNER JOIN tblsubject s
+                                ON c.seq = s.courseseq
+                                    INNER JOIN tblsubjectname j
+                                        ON j.seq = s.subjectnameseq;
+
+CREATE OR REPLACE VIEW vwgrasub
+AS
+SELECT s.seq as vsubseq, g.subjectseq as vgrasubseq 
+    FROM tblsubjectgrade g
+        INNER JOIN tblsubject s
+            ON g.subjectseq = s.seq 
+                INNER JOIN tblsubjectname n
+                    ON n.seq=s.subjectnameseq;
+
+
+CREATE OR REPLACE VIEW vwsubcouroomlec
+as
+SELECT n.name as vcouname, r.name as vroomname, l.name as vlecname
+,j.name as vsubname,c.seq as vcouseq, s.seq as vsubseq,to_char(s.startdate,'yyyy-mm-dd') as vsubstart,to_char(s.enddate,'yyyy-mm-dd') as vsubend
+, t.name as vtextname 
+    FROM tblcourse c
+        INNER JOIN tblcoursename n
+            ON c.coursenameseq = n.seq
+            INNER JOIN tblclassroom r
+                ON c.classroomseq=r.seq
+                    INNER JOIN tbllecturer l
+                        ON c.lecturerseq = l.seq
+                            INNER JOIN tblsubject s
+                                ON c.seq = s.courseseq
+                                    INNER JOIN tbltextbook t
+                                        ON t.seq = s.textbookseq
+                                            INNER JOIN tblsubjectname j
+                                                ON j.seq = s.subjectnameseq;
+
+
+CREATE OR REPLACE VIEW vwsinfogra
+AS
+SELECT i.name as vstuname,i.registrationnum as vrnum,g.written as vgrawri,g.practical as vgraprac
+ , s.courseseq  as vcouseq, g.subjectseq as vsubseq FROM tblstudent s 
+    INNER JOIN tblsubjectgrade g
+        ON s.seq = g.studentseq
+            INNER JOIN tblstudentinfo i
+                ON i.seq = s.studentinfoseq 
+				where i.state=1;
+
+CREATE or replace VIEW vwstucoutemp
+AS
+SELECT DISTINCT vstuname, vsturnum,vstupnum,vcouname,vcoustart,vcouend,vroomname,vsinfoseq,vcouseq
+from vwcousubstutexlec;
+where vsinfoseq=1
+
+
+
+CREATE OR REPLACE VIEW vwcousubstutexlec
+as
+SELECT distinct i.name as vstuname, i.registrationnum as vsturnum, i.phonenum as vstupnum,
+        n.name as vcouname, to_char(c.startdate,'yyyy-mm-dd') as vcoustart, to_char(c.enddate,'yyyy-mm-dd') as vcouend,
+        r.name as vroomname, e.name as vsubname, to_char(j.startdate,'yyyy-mm-dd') as vsubstart, to_char(j.enddate,'yyyy-mm-dd') as vsubend,
+        t.name as vtextname, l.name as vlecname,i.seq as vsinfoseq,c.seq as vcouseq,j.seq as vsubseq
+         FROM tblcourse c   --과정
+           INNER JOIN tblcoursename n  --과정명
+             ON c.coursenameseq = n.seq
+            INNER JOIN tblclassroom r  --강의실
+                 ON c.classroomseq=r.seq
+                    INNER JOIN tbllecturer l  --강사
+                        ON c.lecturerseq = l.seq
+                            INNER JOIN tblsubject j  --과목
+                                ON c.seq = j.courseseq
+                                    INNER JOIN tbltextbook t  --교재
+                                        ON t.seq = j.textbookseq
+                                         INNER JOIN tblstudent s  --교육생    
+                                            ON s.courseseq = c.seq
+                                            INNER JOIN tblstudentinfo i --교육생정보
+                                               ON  i.seq = s.studentinfoseq
+                                                INNER JOIN tblsubjectgrade g --성적
+                                                    ON s.seq = g.studentseq
+                                                        INNER JOIN tblsubjectname e
+                                                            ON e.seq = j.subjectnameseq
+                                                                INNER JOIN tblQuiz q
+                                                                 ON q.subjectseq = j.seq
+									where i.state=1;
+
+CREATE or replace VIEW vwsubgraquiz
+as
+select
+    distinct n.name as vsubnanme,to_char(j.startdate,'yyyy-mm-dd') as vsubstart,to_char(j.enddate,'yyyy-mm-dd') as vsubend,
+    t.name as vtextname, l.name as vlecturername, j.practicalpercent as vsubpracpercent, j.writtenpercent as vsubwrittenpercent,
+    g.written as vgrawritten, g.practical as vgrapractical, q.quizdate as vquizdate,i.seq as vstuinseq,j.seq as vsubseq
+    
+FROM 
+    tblstudent s
+        INNER JOIN tblstudentinfo i
+            ON s.studentinfoseq = i.seq
+                INNER JOIN tblsubjectgrade g
+                    ON g.studentseq = s.seq
+                        INNER JOIN tblsubject j
+                            ON j.seq = g.subjectseq
+                                INNER join tblquiz q
+                                    ON q.subjectseq = j.seq
+                                        Inner join tblcourse c
+                                            on c.seq = s.courseseq
+                                                inner join tbllecturer l
+                                                    on l.seq = c.lecturerseq
+                                                        inner join tbltextbook t
+                                                          on  t.seq = j.textbookseq
+                                                            Inner join tblsubjectname n 
+                                                                on n.seq = j.subjectnameseq
+										where i.state=1;
+                                                                     
+
+
+
+
+
+
+
+
+

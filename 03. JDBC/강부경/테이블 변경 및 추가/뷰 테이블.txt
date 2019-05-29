@@ -1,0 +1,208 @@
+CREATE OR REPLACE VIEW vwGradeList    --성적조회
+AS  
+SELECT DISTINCT
+    tblstudentinfo.NAME AS vStuName,
+    tblSubject.seq AS vSubjectSeq,
+    tblSubjectName.NAME AS vSubjectName,
+    tblSubject.startDate AS vSubjectStartDate,
+    tblsubject.endDate AS vSubjectEndDate,
+    tblTextBook.NAME AS vTextBook,
+    tblLecturer.NAME AS vLecturer,
+    tblSubject.writtenpercent AS vWrittenpercent,
+    tblSubject.practicalPercent AS vPracticalPercent,
+    tblSubject.attendancepercent AS vAttendancepercent,
+    tblsubjectgrade.written AS vwritten,
+    tblsubjectgrade.practical AS vpractical,
+    tblsubjectgrade.attendance AS vattendance,
+    tblsubject.endDate AS vQuizDate,
+    tblSubjectGrade.studentseq AS stuseq
+
+FROM tblcourse
+    INNER JOIN tblsubject ON tblcourse.seq = tblsubject.courseseq
+    INNER JOIN tblcoursename ON tblcoursename.seq = tblcourse.coursenameseq
+    INNER JOIN tbltextbook ON tbltextbook.seq = tblsubject.textbookseq
+    INNER JOIN tblsubjectgrade ON tblsubject.seq = tblsubjectgrade.subjectseq
+    INNER JOIN tblquiz ON tblquiz.subjectseq = tblsubject.seq
+    INNER JOIN tbllecturer ON tbllecturer.seq = tblcourse.lecturerseq
+    INNER JOIN tblsubjectname ON tblsubjectname.seq = tblsubject.subjectnameseq
+    INNER JOIN tblstudent  ON tblstudent.seq = tblsubjectgrade.studentseq
+    INNER JOIN tblstudentinfo ON tblstudentinfo.seq = tblstudent.studentinfoseq
+        WHERE(sysdate - tblcourse.enddate) >0
+        ORDER BY vStuName ASC;
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+CREATE or replace VIEW vwQuizList   --문제확인
+AS  
+SELECT 
+    tblsubjectName.name AS vSubjectName,
+    tblsubject.seq AS vseq,
+    tblQuiz.num AS vQuizNum,
+    tblQuiz.contents AS vQuizContents,
+    tblQuiz.answer AS vQuizAnswer
+    
+  FROM tblSubject
+    INNER JOIN tblQuiz        ON tblquiz.subjectseq = tblSubject.seq
+    INNER JOIN tblsubjectName ON tblsubjectName.seq = tblSubject.subjectNameSeq
+        where tblsubject.seq between 1 and 6 order by vseq asc, vQuizNum asc;
+    
+    
+-----------------------------------------------------------------------------------------------------------------------------------
+
+
+
+CREATE or replace VIEW vwStudentinfo    --학생정보
+AS        
+SELECT distinct
+    tblStudent.seq AS vstuSeq,
+    tblStudentinfo.registrationnum AS vREGISTRATIONNUM,
+    tblStudentinfo.name AS vStudentName,
+    tblCoursename.name AS vCourseName,
+    tblCourse.startdate AS vCourseStartDate,
+    tblCourse.enddate AS vCourseEndDate,
+    tblClassRoom.seq AS vClassRoom
+    FROM tblStudent 
+    INNER JOIN tblStudentinfo   ON tblStudent.studentinfoseq = tblStudentinfo.seq
+    INNER JOIN tblCourse        ON tblStudent.courseseq = tblCourse.seq
+    INNER JOIN tblCourseName    ON tblCourse.coursenameseq = tblCourseName.seq
+    INNER JOIN tblClassRoom     ON tblcourse.classroomseq = tblClassRoom.seq
+    INNER JOIN tblSubject       ON tblCourse.seq = tblsubject.courseseq
+    WHERE (SYSDATE - tblCourse.endDate) > 0;
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+
+
+--drop view vwCourseTotal;
+CREATE OR REPLACE VIEW vwCourseTotal
+AS
+SELECT 
+    I.name AS vname,
+    ROUND(SUM(G.written + G.practical + G.attendance) / COUNT(*), 1) AS vtotal   
+    FROM tblSubjectGrade G
+    
+        INNER JOIN tblSubject B
+            ON G.subjectseq = B.seq
+            
+                INNER JOIN tblStudent S
+                    ON S.seq = G.studentseq
+                    
+                        INNER JOIN tblStudentInfo I
+                            ON S.studentinfoseq = I.seq
+                            
+                                INNER JOIN tblCourse C
+                                    ON S.courseseq = C.seq
+                                    
+                                        GROUP BY I.NAME
+                                            
+                                            ORDER BY ROUND(SUM(G.written + G.practical + G.attendance)) DESC;
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW vwTopStudents   -- 이 뷰 테이블로 다시 로우넘 만들어야함 
+AS
+SELECT
+ 
+   distinct *
+        FROM
+(SELECT 
+    
+    I.seq AS vseq,
+    I.name AS vname, 
+    I.phonenum AS vphonenum, 
+    I.registrationdate AS vregistrationdate, 
+    V.vtotal AS vtotal,
+    l.name AS vlename,
+    c.coursenameseq AS vcourseSeq,
+    n.name AS vcoursename,
+    c.startdate AS vstart,
+    c.enddate AS vend
+    
+FROM tblCourse c
+   
+    INNER JOIN tblCourseName N
+   ON C.coursenameseq = N.seq
+           
+         INNER JOIN tblStudent S
+         ON S.courseseq = C.seq
+            
+            INNER JOIN tblStudentInfo I
+            ON S.studentinfoseq = I.seq
+            
+                 INNER JOIN vwCourseTotal V
+                 ON V.vname = I.name
+                    inner join tbllecturer l
+                    on l.seq = c.lecturerseq
+                  
+               ORDER BY v.vtotal DESC );   
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+select * from vwTopFive;
+
+CREATE OR REPLACE VIEW vwTopFive
+AS 
+    SELECT 
+        ROWNUM as rank,
+        vseq,
+        vname,
+        vphonenum,
+        vregistrationdate, 
+        vtotal,
+        vlename,
+        vcourseSeq,
+        vcoursename,
+        vstart,
+        vend
+      
+    FROM (SELECT * FROM vwTopStudents ORDER BY vtotal DESC) where rownum < 6;
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+ -- 최종 5등 학생
+CREATE OR REPLACE VIEW vwTopFive1 
+    as select * from tblrecommendation 
+        inner join vwTopFive 
+            on tblrecommendation.studentseq = vwTopFive.vseq
+                order by ranking asc;
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+-- 추천서 데이터
+
+INSERT INTO tblrecommendation 
+VALUES(recommendationSeq.NEXTVAL, 28, 
+'위 학생은 다른 학생들에게 모범을 보이며, 과정 중 좋은 성적으로 수료하였습니다. 향후 귀사에서 더욱 더 발전하여 본인의 임무에 역량을 드러낼 것으로 확신합니다.'
+, DEFAULT,1);
+
+INSERT INTO tblrecommendation 
+VALUES(recommendationSeq.NEXTVAL, 8, NULL, 1,2);
+
+INSERT INTO tblrecommendation 
+VALUES(recommendationSeq.NEXTVAL, 26, NULL, 1,3);
+
+INSERT INTO tblrecommendation 
+VALUES(recommendationSeq.NEXTVAL, 3, NULL, 1,4);
+
+INSERT INTO tblrecommendation 
+VALUES(recommendationSeq.NEXTVAL, 5, NULL, 1,5);
